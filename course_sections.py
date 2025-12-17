@@ -20,6 +20,8 @@ class Section:
     --------------
     reference_number : int
         The unique reference number for this section.
+    campus : str
+        The campus where this section is held.
     days : Days[]
         The days of the week when this section meets.
     start_time : str
@@ -30,9 +32,10 @@ class Section:
         The number of available enrollment slots left in this section.
     """
 
-    def __init__(self, reference_number: int, days: "Days[]", 
+    def __init__(self, reference_number: int, campus: str, days: "Days[]", 
                  start_time: str, end_time: str, available_slots: int):
         self._reference_number = reference_number
+        self._campus = campus
         self._days = days
         self._available_slots = available_slots
 
@@ -44,6 +47,10 @@ class Section:
     @property
     def reference_number(self) -> int:
         return self._reference_number
+
+    @property
+    def campus(self) -> str:
+        return self._campus
 
     @property
     def days(self) -> "str[]":
@@ -63,7 +70,7 @@ class Section:
 
     def __str__(self) -> str:
         days_str = ', '.join([day.name for day in self.days])
-        return (f"Section {self.reference_number}: "
+        return (f"Section {self.reference_number} ({self.campus} campus): "
                 f"{days_str} from {time.strftime('%H:%M', self.start_time)} "
                 f"to {time.strftime('%H:%M', self.end_time)} - "
                 f"Available Slots: {self.available_slots}")

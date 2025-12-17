@@ -60,6 +60,7 @@ def get_course_sections(session, term: str, course_code: str):
     for section_data in data:
         available_slots = section_data.get("seatsAvailable", 0)
         reference_number = section_data.get("courseReferenceNumber", "")
+        campus = section_data.get("campusDescription", "")
 
         days = []
         start_time = ""
@@ -78,6 +79,7 @@ def get_course_sections(session, term: str, course_code: str):
         if days and start_time and end_time and reference_number:
             section = Section(
                 reference_number=int(reference_number),
+                campus=campus,
                 days=days,
                 start_time=start_time,
                 end_time=end_time,
@@ -93,4 +95,6 @@ if __name__ == "__main__":
         session.get(base_url)
         get_course_sections(session, term="202630", course_code="CS3000")
         get_course_sections(session, term="202630", course_code="CS3100")
+        # get_course_sections(session, term="202630", course_code="EECE2310")
+        # get_course_sections(session, term="202630", course_code="EECE2311")
 
