@@ -34,10 +34,19 @@ def get_course_sections(session, term: str, course_code: str):
     course_header = {
         "Cookie": f"JSESSIONID={client_cookie}; nubanner-cookie={nubanner_cookie}"
     }
+
+    # Extract subject code and course number
+    subject_code = ""
+    for i, char in enumerate(course_code):
+        if char.isdigit():
+            subject_code = course_code[:i]
+            break
+    course_number = course_code[i:]
+
     course_params = {
-        "txt_subject": "CS",
-        "txt_courseNumber": "3000",
-        "txt_term": "202630",
+        "txt_subject": subject_code,
+        "txt_courseNumber": course_number,
+        "txt_term": term,
     }
     course_response = session.get(base_url + "ssb/searchResults/searchResults",
                                   params=course_params, headers=course_header)
@@ -76,12 +85,12 @@ def get_course_sections(session, term: str, course_code: str):
             )
             course.add_section(section)
 
-    for section in course:
-        print(section)
+    print(course)
 
 
 if __name__ == "__main__":
     with requests.Session() as session:
         session.get(base_url)
         get_course_sections(session, term="202630", course_code="CS3000")
+        get_course_sections(session, term="202630", course_code="CS3100")
 
