@@ -114,6 +114,7 @@ class CourseGetter:
 
             if days and start_time and end_time and reference_number and campus:
                 section = Section(
+                    code=course_code,
                     reference_number=int(reference_number),
                     campus=campus,
                     days=days,

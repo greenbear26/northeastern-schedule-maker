@@ -18,6 +18,8 @@ class Section:
     
     Params
     --------------
+    code : str
+        The course code this section belongs to.
     reference_number : int
         The unique reference number for this section.
     campus : str
@@ -32,8 +34,9 @@ class Section:
         The number of available enrollment slots left in this section.
     """
 
-    def __init__(self, reference_number: int, campus: str, days: "Days[]", 
+    def __init__(self, code: str, reference_number: int, campus: str, days: "Days[]", 
                  start_time: str, end_time: str, available_slots: int):
+        self._code = code
         self._reference_number = reference_number
         self._campus = campus
         self._days = days
@@ -43,6 +46,10 @@ class Section:
         formatted_end_time = end_time[:2] + ":" + end_time[2:]
         self._start_time = time.strptime(formatted_start_time, "%H:%M")
         self._end_time = time.strptime(formatted_end_time, "%H:%M")
+
+    @property
+    def code(self) -> str:
+        return self._code
 
     @property
     def reference_number(self) -> int:
@@ -87,6 +94,9 @@ class Course:
         """Adds a section to the collection if it matches the course code."""
         if not isinstance(section, Section):
             raise TypeError("Expected a Section instance")
+
+        if section.code != self.code:
+            raise ValueError("Section code does not match Course code")
 
         self._sections.append(section)
 
