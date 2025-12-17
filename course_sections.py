@@ -103,7 +103,7 @@ class Course:
         return iter(self.sections)
 
     def __str__(self) -> str:
-        response = f"Course {self.code} Sections:\n"
+        response = f"{self.code} Sections:\n"
         for section in self.sections:
             response += f"  {section}\n"
         return response

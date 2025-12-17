@@ -1,24 +1,42 @@
 from course_sections import Course, Section, Days
 import requests
 
-base_url = "https://nubanner.neu.edu/StudentRegistrationSsb/"
+BASE_URL = "https://nubanner.neu.edu/StudentRegistrationSsb/"
 
-def get_course_sections(session, term: str, course_code: str):
+def get_course(session, term: str, course_code: str) -> Course:
+    """Fetches and returns the sections for a given course code and term.
+
+    Params
+    ------------
+    session : requests.Session
+        An active requests session to maintain cookies and headers.
+    term : str
+        The term code (e.g., "202630" for Spring 2026).
+    course_code : str
+        The course code (e.g., "CY2550").
+
+    Returns
+    ------------
+    Course
+        An object containing the sections of the specified course.
+    """
+    # Initialize Course object
     course = Course(course_code)
 
+    # Manage cookies
     client_cookie = session.cookies.get_dict().get("JSESSIONID")
     nubanner_cookie = session.cookies.get_dict().get("nubanner-cookie")
 
     if not client_cookie or not nubanner_cookie:
-        session.get(base_url)
+        session.get(BASE_URL)
         client_cookie = session.cookies.get_dict().get("JSESSIONID")
         nubanner_cookie = session.cookies.get_dict().get("nubanner-cookie")
 
-    # Reset
+    # Reset Request
     reset_header = {
         "Cookie": f"JSESSIONID={client_cookie}; nubanner-cookie={nubanner_cookie}"
     }
-    session.post(base_url + "ssb/classSearch/resetDataForm", headers=reset_header)
+    session.post(BASE_URL + "ssb/classSearch/resetDataForm", headers=reset_header)
 
     # Term Declaration
     term_header = {
@@ -32,12 +50,9 @@ def get_course_sections(session, term: str, course_code: str):
         "studyDatepicker": "",
         "endDatePicker": "",
     }
-    session.post(base_url + "ssb/term/search?mode=search", data=term_body)
+    session.post(BASE_URL + "ssb/term/search?mode=search", data=term_body)
 
     # Pull Course data
-    course_header = {
-        "Cookie": f"JSESSIONID={client_cookie}; nubanner-cookie={nubanner_cookie}"
-    }
 
     # Extract subject code and course number
     subject_code = ""
@@ -47,13 +62,19 @@ def get_course_sections(session, term: str, course_code: str):
             break
     course_number = course_code[i:]
 
+    course_header = {
+        "Cookie": f"JSESSIONID={client_cookie}; nubanner-cookie={nubanner_cookie}"
+    }
+
     course_params = {
         "txt_subject": subject_code,
         "txt_courseNumber": course_number,
         "txt_term": term,
     }
-    course_response = session.get(base_url + "ssb/searchResults/searchResults",
+    course_response = session.get(BASE_URL + "ssb/searchResults/searchResults",
                                   params=course_params, headers=course_header)
+
+    # Parse Course Data
 
     data = course_response.json().get("data", [])
 
@@ -80,7 +101,7 @@ def get_course_sections(session, term: str, course_code: str):
             start_time = meeting_time.get("beginTime", "")
             end_time = meeting_time.get("endTime", "")
 
-        if days and start_time and end_time and reference_number:
+        if days and start_time and end_time and reference_number and campus:
             section = Section(
                 reference_number=int(reference_number),
                 campus=campus,
