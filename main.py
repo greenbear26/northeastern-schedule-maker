@@ -2,10 +2,6 @@ import requests
 from get_course import CourseGetter
 from get_schedules import ScheduleGetter
 
-    
-
-
-
 with requests.Session() as session:
     # Set courses
     course_getter = CourseGetter(session, "202630")

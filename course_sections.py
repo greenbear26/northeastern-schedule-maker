@@ -3,14 +3,13 @@ import enum
 
 class Days(enum.Enum):
     """Enumeration for days of the week."""
-    MONDAY = "monday"
-    TUESDAY = "tuesday"
-    WEDNESDAY = "wednesday"
-    THURSDAY = "thursday"
-    FRIDAY = "friday"
-    SATURDAY = "saturday"
-    SUNDAY = "sunday"
-
+    MON = "monday"
+    TUE = "tuesday"
+    WED = "wednesday"
+    THU = "thursday"
+    FRI = "friday"
+    SAT = "saturday"
+    SUN = "sunday"
 
 class Section:
     """Represents a section of a course, containing scheduling and enrollment 
