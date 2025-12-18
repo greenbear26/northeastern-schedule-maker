@@ -59,11 +59,6 @@ class ScheduleGetter:
     def make_schedules(self) -> "Section[]":
         """Generates all possible non-conflicting schedules from the provided courses.
 
-        Params
-        ------------
-        courses : Course[]
-            A list of Course objects to generate schedules from.
-
         Returns
         ------------
         Course[][]
