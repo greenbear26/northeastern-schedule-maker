@@ -8,9 +8,12 @@ from get_schedules import ScheduleGetter
 
 streamlit.title("Course Schedule Generator")
 term = streamlit.text_input("Enter Term (e.g., '202630'):")
-course_codes_input = streamlit.text_input("Enter Course Codes (comma-separated):")
-course_codes = [code.strip() for code in course_codes_input.split(",") if 
-                    code.strip()]
+course_df = pd.DataFrame({
+    'Course Codes': ['']
+})
+course_codes_input = streamlit.data_editor(course_df, num_rows="dynamic")
+course_codes = [course.strip() for course in course_codes_input['Course Codes'].tolist()
+                if course is not None and course.strip() != '']
 
 if streamlit.button("Generate Schedules") and term and course_codes:
     with requests.Session() as session:

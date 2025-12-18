@@ -3,27 +3,26 @@ import requests
 
 
 class CourseGetter:
+    """Fetches course sections from the Northeastern University Banner system
+
+    Params
+    ------------
+    session : requests.Session
+        An active requests session to maintain cookies and headers.
+    term : str
+        The term code (e.g., "202630" for Spring 2026).
+    """
     BASE_URL = "https://nubanner.neu.edu/StudentRegistrationSsb/"
 
     def __init__(self, session: requests.Session, term: str):
         self._session = session
         self._term = term
-        
-        # Manage cookies
-        self._client_cookie = self._session.cookies.get_dict().get("JSESSIONID")
-        self._nubanner_cookie = self._session.cookies.get_dict().get("nubanner-cookie")
+        self._is_initialized = False
 
-        if not self._client_cookie or not self._nubanner_cookie:
-            self._session.get(CourseGetter.BASE_URL)
-            self._client_cookie = self._session.cookies.get_dict().get("JSESSIONID")
-            self._nubanner_cookie = self._session.cookies.get_dict().get("nubanner-cookie")
-
+    def _initialize(self):
+        if self._is_initialized:
+            return
         # Term Declaration
-        term_header = {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UT",
-            "Cookie": f"JSESSIONID={self._client_cookie};\
-                            nubanner-cookie={self._nubanner_cookie}"
-        }
         term_body = {
             "term": self._term,
             "studyPath": "",
@@ -33,6 +32,7 @@ class CourseGetter:
         }
         self._session.post(CourseGetter.BASE_URL + "ssb/term/search?mode=search", 
                            data=term_body)
+        self._is_initialized = True
 
     def get_course(self, course_code: str) -> Course:
         """Fetches and returns the sections for a given course code and term.
@@ -51,16 +51,12 @@ class CourseGetter:
         Course
             An object containing the sections of the specified course.
         """
+        self._initialize()
         # Initialize Course object
         course = Course(course_code)
 
-
         # Reset Request
-        reset_header = {
-            "Cookie": f"JSESSIONID={self._client_cookie};\
-                        nubanner-cookie={self._nubanner_cookie}"
-        }
-        self._session.post(CourseGetter.BASE_URL + "ssb/classSearch/resetDataForm", headers=reset_header)
+        self._session.post(CourseGetter.BASE_URL + "ssb/classSearch/resetDataForm")
 
         # Pull Course data
 
@@ -72,18 +68,13 @@ class CourseGetter:
                 break
         course_number = course_code[i:]
 
-        course_header = {
-            "Cookie": f"JSESSIONID={self._client_cookie};\
-                        nubanner-cookie={self._nubanner_cookie}"
-        }
-
         course_params = {
             "txt_subject": subject_code,
             "txt_courseNumber": course_number,
             "txt_term": self._term,
         }
         course_response = self._session.get(CourseGetter.BASE_URL + "ssb/searchResults/searchResults",
-                                      params=course_params, headers=course_header)
+                                      params=course_params)
 
         # Parse Course Data
 
