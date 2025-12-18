@@ -1,30 +1,46 @@
+import streamlit
+import pandas as pd
 import sys
 import requests
+import time
 from get_course import CourseGetter
 from get_schedules import ScheduleGetter
 
-if len(sys.argv) < 3:
-    print("Usage: python main.py <term> <course_code1> <course_code2> ...")
-    print("Example: python main.py 202630 CY2550 CS3100 COMM1210")
-    sys.exit(1)
+streamlit.title("Course Schedule Generator")
+term = streamlit.text_input("Enter Term (e.g., '202630'):")
+course_codes_input = streamlit.text_input("Enter Course Codes (comma-separated):")
+course_codes = [code.strip() for code in course_codes_input.split(",") if 
+                    code.strip()]
 
-with requests.Session() as session:
-    # Set courses
-    course_getter = CourseGetter(session, sys.argv[1])
+if streamlit.button("Generate Schedules") and term and course_codes:
+    with requests.Session() as session:
+        # Set courses
+        course_getter = CourseGetter(session, term)
 
-    courses = []
-    course_codes = sys.argv[2:]
-    for code in course_codes:
-        course = course_getter.get_course(code)
-        courses.append(course)
+        courses = []
+        for code in course_codes:
+            course = course_getter.get_course(code)
+            courses.append(course)
 
-    # Generate schedules
-    schedule_getter = ScheduleGetter(courses)
-    schedules = schedule_getter.make_schedules()
+        # Generate schedules
+        schedule_getter = ScheduleGetter(courses)
+        schedules = schedule_getter.make_schedules()
 
-    print(f"Generated {len(schedules)} possible schedules:")
+        streamlit.write(f"Generated {len(schedules)} possible schedules:")
 
-    for i, current_schedule in enumerate(schedules):
-        print(f"\nSchedule {i + 1}:")
-        for section in current_schedule:
-            print(f"{section.code}: {str(section)}")
+        for i, schedule in enumerate(schedules):
+            streamlit.write(f"### Schedule {i + 1}")
+            data = {
+                "CRN": [section.reference_number for section in schedule],
+                "Days": [", ".join([day.value.upper() for day in section.days]) 
+                            for section in schedule],
+                "Start Time": [time.strftime("%H:%M",section.start_time) for section
+                                    in schedule],
+                "End Time": [time.strftime("%H:%M",section.end_time) for section 
+                                in schedule],
+                "Campus": [section.campus for section in schedule],
+                "Available Slots": [section.available_slots for section in
+                    schedule],
+            }
+            df = pd.DataFrame(data, index=[section.code for section in schedule])
+            streamlit.dataframe(df)
