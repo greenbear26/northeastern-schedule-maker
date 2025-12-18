@@ -7,23 +7,38 @@ from get_course import CourseGetter
 from get_schedules import ScheduleGetter
 
 streamlit.title("Course Schedule Generator")
-term = streamlit.text_input("Enter Term (e.g., '202630'):")
+
+term_dict = CourseGetter.get_terms()
+term_description = streamlit.selectbox("Select Term", term_dict.keys())
+
 course_df = pd.DataFrame({
     'Course Codes': ['']
 })
-course_codes_input = streamlit.data_editor(course_df, num_rows="dynamic")
-course_codes = [course.strip() for course in course_codes_input['Course Codes'].tolist()
+course_codes_input = streamlit.data_editor(course_df, num_rows="dynamic",
+                                           hide_index=True)
+
+if streamlit.button("Generate Schedules"):
+    term = term_dict[term_description]
+    course_codes = [course.strip() for course in course_codes_input['Course Codes'].tolist()
                 if course is not None and course.strip() != '']
 
-if streamlit.button("Generate Schedules") and term and course_codes:
+    if not course_codes:
+        streamlit.error("Please enter at least one course code.")
+        sys.exit(1)
+
+    if not term:
+        streamlit.error("Please select a valid term.")
+        sys.exit(1)
+
     with requests.Session() as session:
         # Set courses
         course_getter = CourseGetter(session, term)
 
-        courses = []
-        for code in course_codes:
-            course = course_getter.get_course(code)
-            courses.append(course)
+        with streamlit.spinner("Fetching course data..."):
+            courses = []
+            for code in course_codes:
+                course = course_getter.get_course(code)
+                courses.append(course)
 
         # Generate schedules
         schedule_getter = ScheduleGetter(courses)
@@ -46,4 +61,4 @@ if streamlit.button("Generate Schedules") and term and course_codes:
                     schedule],
             }
             df = pd.DataFrame(data, index=[section.code for section in schedule])
-            streamlit.dataframe(df)
+            streamlit.dataframe(df, hide_index=True)

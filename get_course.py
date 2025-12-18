@@ -117,3 +117,28 @@ class CourseGetter:
 
         return course
 
+    @classmethod
+    def get_terms(cls) -> "dict(str, str)[]":
+        """Fetches and returns the list of available term codes from the Banner system.
+
+        Returns
+        ------------
+        dict(str, str)
+            A dictionary with key as descriptions and value as their term codes
+        """
+        with requests.Session() as session:
+            params = {
+                    "offset": 1,
+                    "max": 100
+            }
+            response = session.get(cls.BASE_URL + "ssb/classSearch/getTerms",
+                                   params=params)
+            term_list = response.json()
+            final_dict = {}
+            for term in term_list:
+                term_code = term.get("code", "")
+                term_desc = term.get("description", "")
+                if term_code and term_desc:
+                    final_dict[term_desc] = term_code
+            return final_dict
+
