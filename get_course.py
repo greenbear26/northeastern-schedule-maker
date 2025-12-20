@@ -94,8 +94,13 @@ class CourseGetter:
             end_time = ""
             meeting_times = section_data.get("meetingsFaculty", [])
             if meeting_times:
-                faculty_dict = meeting_times[0]
-                meeting_time = faculty_dict.get("meetingTime", {})
+                meeting_time = {}
+                for faculty_dict in meeting_times:
+                    time = faculty_dict.get("meetingTime", {})
+                    if time.get("meetingTypeDescription", "") != "Final Exam":
+                        meeting_time = time
+                        break
+
                 for day in Days:
                     if meeting_time.get(day.value, False):
                         days.append(day)
