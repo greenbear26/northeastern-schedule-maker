@@ -34,6 +34,38 @@ class CourseGetter:
                            data=term_body)
         self._is_initialized = True
 
+    def _get_meeting_data(self, reference_number: str) -> "dict":
+        """Fetches and returns the meeting data for a given course reference
+        number. This includes instructor and meeting time information.
+
+        Params
+        ------------
+        reference_number : str
+            The course reference number.
+
+        Returns
+        ------------
+        dict
+            A dictionary containing the meeting data for the specified course
+        """
+        self._initialize()
+        faculty_params = {
+                "term": self._term,
+                "courseReferenceNumber": reference_number
+        }
+        faculty_response = self._session.get(CourseGetter.BASE_URL +
+            "ssb/searchResults/getFacultyMeetingTimes", params=faculty_params)
+        faculty_data = faculty_response.json().get("fmt", [])
+
+        for faculty_dict in faculty_data:
+            meeting_time = faculty_dict.get("meetingTime", "")
+            if meeting_time.get("meetingTypeDescription", "") != "Final Exam":
+                return faculty_dict
+
+        return {}
+
+
+
     def get_course(self, course_code: str) -> Course:
         """Fetches and returns the sections for a given course code and term.
 
@@ -89,30 +121,34 @@ class CourseGetter:
             reference_number = section_data.get("courseReferenceNumber", "")
             campus = section_data.get("campusDescription", "")
 
-            days = []
-            start_time = ""
-            end_time = ""
-            meeting_times = section_data.get("meetingsFaculty", [])
-            if meeting_times:
-                meeting_time = {}
-                for faculty_dict in meeting_times:
-                    time = faculty_dict.get("meetingTime", {})
-                    if time.get("meetingTypeDescription", "") != "Final Exam":
-                        meeting_time = time
-                        break
+            if reference_number:
+                days = []
+                start_time = ""
+                end_time = ""
+                faculty_meeting_time = self._get_meeting_data(reference_number)
+                if faculty_meeting_time:
+                    instructor = None
+                    faculty_list = faculty_meeting_time.get("faculty", [])
+                    for faculty in faculty_list:
+                        if faculty.get("primaryIndicator", False) == True:
+                            instructor = faculty.get("displayName", None)
+                            break
 
-                for day in Days:
-                    if meeting_time.get(day.value, False):
-                        days.append(day)
+                    meeting_time = faculty_meeting_time.get("meetingTime", {})
+                    for day in Days:
+                        if meeting_time.get(day.value, False):
+                            days.append(day)
 
-                start_time = meeting_time.get("beginTime", "")
-                end_time = meeting_time.get("endTime", "")
+                    start_time = meeting_time.get("beginTime", "")
+                    end_time = meeting_time.get("endTime", "")
+
 
             if days and start_time and end_time and reference_number and campus:
                 section = Section(
                     code=course_code,
                     reference_number=int(reference_number),
                     campus=campus,
+                    instructor=instructor,
                     days=days,
                     start_time=start_time,
                     end_time=end_time,
