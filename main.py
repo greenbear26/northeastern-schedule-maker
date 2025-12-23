@@ -24,6 +24,12 @@ CALENDAR_OPTIONS = {
     "dayHeaderFormat": { "weekday": "short" },
     "firstDay": 1,
     "headerToolbar": False,
+    "dayHeaders": False,
+    "slotMinTime": "08:00:00",
+    "slotMaxTime": "22:00:00",
+    "slotDuration": "01:00:00",  # Duration of each slot
+    "slotLabelInterval": "01:00:00",  # Label every hour
+    "slotLabelStepSize": "01:00",  # Step size for labels
     "views": {
       "timeGridFiveDay": {
         "type": "timeGrid",
@@ -32,13 +38,30 @@ CALENDAR_OPTIONS = {
       }
     },
     "height": 600,
-    "slotMinTime": "08:00:00",
-    "slotMaxTime": "22:00:00",
-
 }
 
+CALENDAR_CSS = """
+    .fc-col-time-frame {
+        height: auto !important;
+    }
+    .fc-timegrid-slot {
+        height: 6em !important;  /* Increase from default ~2em */
+    }
+    .fc-event-title {
+        font-size: 10px;
+        font-weight: 700;
+        word-wrap: break-word;
+        white-space: pre-wrap;
+        line-height: 1.3;
+    }
+    .fc-event {
+        overflow: auto;
+        max-height: 120px;
+        padding: 4px;
+    }
+"""
+
 def construct_calender_events(schedules: "Section[][]"):
-    # Initialize calendar_events as a list of lists (one for each schedule)
     streamlit.session_state.calendar_events = []
     
     for schedule in schedules:
@@ -49,12 +72,14 @@ def construct_calender_events(schedules: "Section[][]"):
                 start_time = time.strftime("%H:%M:%S", section.start_time)
                 end_time = time.strftime("%H:%M:%S", section.end_time)
                 event = {
-                    "title": f"{section.code}",
                     "start": f"{date}T{start_time}",
                     "end": f"{date}T{end_time}",
+                    "title": f"Course:{section.code}\n"
+                        f"CRN:{section.reference_number}\n"
+                        f"Campus:{section.campus}\n"
+                        f"Teacher:{section.instructor}"
                 }
                 events.append(event)
-        # Append the events list for this schedule
         streamlit.session_state.calendar_events.append(events)
     
 
@@ -111,5 +136,6 @@ if 'calendar_events' in streamlit.session_state:
             key=f"course_schedule_calendar_{i+1}",
             events=events,  # Pass events directly (not a nested list)
             options=CALENDAR_OPTIONS,
+            custom_css=CALENDAR_CSS
         )
 
