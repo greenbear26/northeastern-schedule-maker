@@ -7,7 +7,6 @@ import time
 from course_sections import Days
 from get_course import CourseGetter
 from get_schedules import ScheduleGetter
-from time import sleep
 
 DAYS_TO_DATE = {
     Days.MON: "2025-12-22",
